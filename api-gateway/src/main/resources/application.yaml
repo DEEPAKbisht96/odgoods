@@ -1,0 +1,5 @@
+server:
+  port: 8000
+
+jwt:
+  secret: XvK0T94kNehYkSzgE2sP9uwodC9gKNArHIXwlO1kzRg=
