@@ -3,6 +3,8 @@ package com.odgoods.apigateway.filter;
 import com.odgoods.apigateway.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 @Component
 public class JwtAuthenticationFilter implements GatewayFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtUtil jwtUtil;
 
     public JwtAuthenticationFilter(JwtUtil jwtUtil) {
@@ -37,19 +40,18 @@ public class JwtAuthenticationFilter implements GatewayFilter {
         try {
             jwtUtil.validateToken(token);
             claims = jwtUtil.extractClaims(token);
+
+            log.info("<UNK>token<UNK>{}", claims);
+
         } catch (JwtException e) {
             return unauthorized(exchange, "Invalid JWT: " + e.getMessage());
         }
 
         // Extract user ID (either from "sub" or custom claim like "user_id")
-        String userId = claims.get("user_id", String.class);
-        if (userId == null) {
-            userId = claims.getSubject();
-        }
+        Long userId = claims.get("id", Long.class);
 
-        String finalUserId = userId;
         ServerWebExchange modifiedExchange = exchange.mutate()
-                .request(builder -> builder.header("X-User-Id", finalUserId))
+                .request(builder -> builder.header("X-User-Id", String.valueOf(userId)))
                 .build();
 
         return chain.filter(modifiedExchange);

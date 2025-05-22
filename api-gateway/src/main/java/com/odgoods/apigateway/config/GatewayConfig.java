@@ -40,6 +40,11 @@ public class GatewayConfig {
                         .filters(f -> f.filter(jwtFilter))
                         .uri("http://product-service:8002"))
 
+                // order service (filtered)
+                .route("order-service", r -> r.path("/orders/**")
+                        .filters(f -> f.filter(jwtFilter))
+                        .uri("http://order-service:8003"))
+
                 .build();
     }
 }

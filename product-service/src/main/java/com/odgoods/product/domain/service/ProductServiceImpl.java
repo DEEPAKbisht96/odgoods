@@ -19,9 +19,9 @@ public class ProductServiceImpl implements ProductService{
     }
 
     @Override
-    public ProductResponse createProduct(ProductRequest productRequest) {
+    public ProductResponse createProduct(ProductRequest productRequest, Long userId) {
 
-        Product product = productMapper.toEntity(productRequest);
+        Product product = productMapper.toEntity(productRequest, userId);
         Product savedProduct = productRepository.save(product);
 
         return productMapper.toResponse(savedProduct);

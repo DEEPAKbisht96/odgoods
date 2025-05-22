@@ -5,7 +5,7 @@ import com.odgoods.product.domain.dto.ProductResponse;
 
 public interface ProductService {
 
-    ProductResponse createProduct(ProductRequest productRequest);
+    ProductResponse createProduct(ProductRequest productRequest, Long userId);
 
     ProductResponse getProductById(String productId);
 

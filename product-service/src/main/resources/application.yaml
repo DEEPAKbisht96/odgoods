@@ -1,9 +1,6 @@
 spring:
   application:
     name: product-service
-  grpc:
-    server:
-      port: 9000
   data:
     mongodb:
       host: ${MONGO_HOST:localhost}
@@ -12,6 +9,10 @@ spring:
       username: ${MONGO_USER:product_user}
       password: ${MONGO_PASS:Deepak12@34}
       authentication-database: ${MONGO_AUTH_DB:admin}
+
+grpc:
+  server:
+    port: 9001
 
 server:
   port: 8002

@@ -1,4 +1,4 @@
-package com.odgoods.product.grpc;
+package com.odgoods.orderservice.grpc;
 
 import auth.AuthResponse;
 import auth.AuthServiceGrpc;

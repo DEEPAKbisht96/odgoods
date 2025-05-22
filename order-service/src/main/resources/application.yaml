@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: order-service
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+server:
+  port: 8003
+
+grpc:
+  server:
+    port: 9002

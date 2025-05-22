@@ -1,10 +1,9 @@
 package com.odgoods.authservice.domain.auth.dto;
 
 import com.odgoods.authservice.domain.auth.model.Role;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.validation.constraints.*;
 import org.hibernate.validator.constraints.URL;
 
 public record RegisterRequest(
@@ -24,8 +23,8 @@ public record RegisterRequest(
         @Size(max = 100, message = "Last name too long")
         String lastName,
 
-        @NotBlank(message = "Role cannot be blank")
-        @NotEmpty(message = "Invalid role")
+        @Enumerated(EnumType.STRING)
+        @NotNull(message = "Role must be provided")
         Role role,
 
         @URL(message = "Invalid profile URL")

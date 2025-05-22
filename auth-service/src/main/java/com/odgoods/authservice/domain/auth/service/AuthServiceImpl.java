@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 
+import java.util.*;
+
 @Service
 @Transactional
 public class AuthServiceImpl implements AuthService {
@@ -30,12 +32,29 @@ public class AuthServiceImpl implements AuthService {
     private final TokenService tokenService;
 
     public AuthServiceImpl(UserRepository userRepository, UserMapper userMapper,
-            JwtService jwtService, PasswordEncoder passwordEncoder, TokenService tokenService) {
+                           JwtService jwtService, PasswordEncoder passwordEncoder, TokenService tokenService) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
+    }
+
+    private List<String> makeToken(User user, User savedUser) {
+        Map<String, Object> claims = new HashMap<>();
+
+        claims.put("id", user.getId());
+        claims.put("first_name", user.getFirstName());
+        claims.put("profile", user.getProfileUrl());
+        claims.put("role", user.getRole());
+
+        String accessToken = jwtService.generateToken(claims, new CustomUserDetails(savedUser));
+        String refreshToken = jwtService.generateRefreshToken(new CustomUserDetails(savedUser));
+
+        // save the token to the database for further validation in future
+        tokenService.saveToken(refreshToken, TokenType.BEARER, false, false, savedUser);
+
+        return new ArrayList<>(Arrays.asList(accessToken, refreshToken));
     }
 
     @Override
@@ -50,15 +69,11 @@ public class AuthServiceImpl implements AuthService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         User savedUser = userRepository.save(user);
 
-        String accessToken = jwtService.generateToken(new CustomUserDetails(savedUser));
-        String refreshToken = jwtService.generateRefreshToken(new CustomUserDetails(savedUser));
-
-        // save the token to the database for further validation in future
-        tokenService.saveToken(refreshToken, TokenType.BEARER, false, false, savedUser);
+        List<String> tokens = makeToken(user, savedUser);
 
         return new AuthenticationResponse(
-                accessToken,
-                refreshToken,
+                tokens.get(0),
+                tokens.get(1),
                 userMapper.toResponse(savedUser));
 
     }
@@ -79,16 +94,11 @@ public class AuthServiceImpl implements AuthService {
             throw new BadCredentialsException("invalid credentails");
         }
 
-        // Generate tokens
-        String accessToken = jwtService.generateToken(new CustomUserDetails(user));
-        String refreshToken = jwtService.generateRefreshToken(new CustomUserDetails(user));
-
-        // save the token to the database for further validation in future
-        tokenService.saveToken(refreshToken, TokenType.BEARER, false, false, user);
+        List<String> tokens = makeToken(user, user);
 
         return AuthenticationResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
+                .accessToken(tokens.get(0))
+                .refreshToken(tokens.get(1))
                 .user(userMapper.toResponse(user))
                 .build();
     }

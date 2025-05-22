@@ -19,10 +19,6 @@ public class ProductRequest {
     @Size(max = 100, message = "Name too long")
     private String name;
 
-    @NotBlank(message = "Merchant ID is required")
-    @NotEmpty(message = "Merchant ID cannot be empty")
-    private String userId;
-
     @NotBlank(message = "Description is required")
     @Size(max = 1000, message = "Description too long")
     private String description;
@@ -33,8 +29,7 @@ public class ProductRequest {
     @NotBlank(message = "Thumbnail is required")
     private String thumbnail;
 
-    @NotEmpty(message = "At least one category is required")
-    @Max(message = "max 3 categories allowed", value = 3)
+    @Size(min = 1, max = 3, message = "Must have 1 to 3 categories")
     private List<ProductCategory> categories;
 
     @Size(max = 15, message = "Too many tags")

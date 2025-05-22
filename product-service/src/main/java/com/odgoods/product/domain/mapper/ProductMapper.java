@@ -6,9 +6,11 @@ import com.odgoods.product.domain.entity.Product;
 
 public class ProductMapper {
 
-    public Product toEntity(ProductRequest productRequest) {
+    public Product toEntity(ProductRequest productRequest, Long userId) {
 
         Product product = new Product();
+
+        product.setUserId(userId);
 
         product.setName(productRequest.getName());
         product.setDescription(productRequest.getDescription());
