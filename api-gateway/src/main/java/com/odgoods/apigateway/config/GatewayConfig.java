@@ -1,6 +1,5 @@
 package com.odgoods.apigateway.config;
 
-
 import com.odgoods.apigateway.filter.JwtAuthenticationFilter;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
@@ -20,7 +19,7 @@ public class GatewayConfig {
     public RouteLocator gatewayRoutes(RouteLocatorBuilder builder) {
         return builder.routes()
 
-                // Public auth routes (no filter)
+                // === Public auth routes (no filter) ===
                 .route("auth-login", r -> r.path("/auth/login")
                         .uri("http://auth-service:8001"))
                 .route("auth-register", r -> r.path("/auth/register")
@@ -30,17 +29,17 @@ public class GatewayConfig {
                 .route("auth-health", r -> r.path("/auth/health")
                         .uri("http://auth-service:8001"))
 
-                // Protected auth routes (filtered)
+                // === Protected auth routes ===
                 .route("auth-other", r -> r.path("/auth/**")
                         .filters(f -> f.filter(jwtFilter))
                         .uri("http://auth-service:8001"))
 
-                // Product service (filtered)
+                // === Protected product routes ===
                 .route("product-service", r -> r.path("/products/**")
                         .filters(f -> f.filter(jwtFilter))
                         .uri("http://product-service:8002"))
 
-                // order service (filtered)
+                // === Protected order routes ===
                 .route("order-service", r -> r.path("/orders/**")
                         .filters(f -> f.filter(jwtFilter))
                         .uri("http://order-service:8003"))

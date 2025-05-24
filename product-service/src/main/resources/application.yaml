@@ -14,5 +14,11 @@ grpc:
   server:
     port: 9001
 
+
+springdoc:
+  swagger-ui:
+    path: /docs
+
+
 server:
   port: 8002

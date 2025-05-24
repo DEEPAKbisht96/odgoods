@@ -4,10 +4,12 @@ import auth.AuthResponse;
 import auth.AuthServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 
+@Slf4j
 @Service
 public class AuthServiceGrpcClient {
 
@@ -27,6 +29,7 @@ public class AuthServiceGrpcClient {
     }
 
     public AuthResponse isUserValid(long userId) {
+        log.info("AuthResponse :: isUserValid: {}", userId);
         return authServiceBlockingStub.isUserValid(auth.AuthRequest.newBuilder().setId(userId).build());
     }
 }

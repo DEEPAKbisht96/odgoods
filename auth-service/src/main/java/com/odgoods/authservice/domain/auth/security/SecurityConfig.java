@@ -36,10 +36,19 @@ public class SecurityConfig {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/me").authenticated()
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers(
+                                "/auth/me").authenticated()
+                        .requestMatchers(
+                                "/auth/**",           // allow public endpoints
+                                "/docs/**",           // this is your custom swagger-ui path
+                                "/v3/api-docs/**",    // <-- IMPORTANT for OpenAPI spec
+                                "/swagger-ui/**",     // <-- REQUIRED for loading swagger-ui static files
+                                "/swagger-resources/**",  // <-- OPTIONAL (legacy support)
+                                "/webjars/**"         // <-- if using webjars
+                        ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated())
+                        .anyRequest().authenticated()
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService, customUserDetailsService),
@@ -48,7 +57,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public GrpcAuthenticationReader grpcAuthenticationReader(){
+    public GrpcAuthenticationReader grpcAuthenticationReader() {
         return new BasicGrpcAuthenticationReader();
     }
 

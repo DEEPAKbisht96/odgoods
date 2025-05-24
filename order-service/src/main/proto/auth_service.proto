@@ -15,5 +15,6 @@ message AuthRequest {
 
 message AuthResponse {
   int64 id = 1;
-  bool isValid = 2;
+  string role = 2;
+  bool isValid = 3;
 }

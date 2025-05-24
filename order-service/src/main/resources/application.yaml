@@ -5,9 +5,23 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  kafka:
+    bootstrap-servers: apache-kafka:29092
+    producer:
+        key-serializer: org.apache.kafka.common.serialization.StringSerializer
+        value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+        properties:
+          spring.json.add.type.headers: false
+    listener:
+        missing-topics-fatal: false
 
 server:
   port: 8003
+
+
+springdoc:
+  swagger-ui:
+    path: /docs
 
 grpc:
   server:

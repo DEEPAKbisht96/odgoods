@@ -3,8 +3,7 @@ package com.odgoods.apigateway.filter;
 import com.odgoods.apigateway.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.http.HttpHeaders;
@@ -17,9 +16,9 @@ import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
 
 @Component
+@Slf4j
 public class JwtAuthenticationFilter implements GatewayFilter {
 
-    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtUtil jwtUtil;
 
     public JwtAuthenticationFilter(JwtUtil jwtUtil) {
@@ -31,24 +30,36 @@ public class JwtAuthenticationFilter implements GatewayFilter {
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.warn("Missing or invalid Authorization header");
             return unauthorized(exchange, "Missing or invalid Authorization header");
         }
 
         String token = authHeader.substring(7);
-
         Claims claims;
+
         try {
             jwtUtil.validateToken(token);
             claims = jwtUtil.extractClaims(token);
-
-            log.info("<UNK>token<UNK>{}", claims);
-
+            log.debug("JWT validated successfully: {}", claims);
         } catch (JwtException e) {
+            log.error("JWT validation error: {}", e.getMessage());
             return unauthorized(exchange, "Invalid JWT: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error during JWT processing: ", e);
+            return unauthorized(exchange, "Unexpected error during token validation.");
         }
 
-        // Extract user ID (either from "sub" or custom claim like "user_id")
-        Long userId = claims.get("id", Long.class);
+        Long userId;
+        try {
+            userId = claims.get("id", Long.class);
+            if (userId == null) {
+                log.warn("Missing 'id' claim in JWT");
+                return unauthorized(exchange, "Missing user ID in token.");
+            }
+        } catch (Exception e) {
+            log.error("Error extracting user ID from claims: ", e);
+            return unauthorized(exchange, "Invalid user ID in token.");
+        }
 
         ServerWebExchange modifiedExchange = exchange.mutate()
                 .request(builder -> builder.header("X-User-Id", String.valueOf(userId)))

@@ -41,4 +41,19 @@ public class ProfileMapper {
         );
     }
 
+    public MerchantProfile updateEntity(MerchantProfile merchantProfile, ProfileRequest profileRequest){
+        if(profileRequest.getCompanyAddress() != null) merchantProfile.setCompanyAddress(profileRequest.getCompanyAddress());
+        if(profileRequest.getCompanyCategory() != null) merchantProfile.setCompanyCategory(profileRequest.getCompanyCategory());
+        if(profileRequest.getCompanyDescription() != null) merchantProfile.setCompanyDescription(profileRequest.getCompanyDescription());
+        if(profileRequest.getCompanyName() != null) merchantProfile.setCompanyName(profileRequest.getCompanyName());
+        if(profileRequest.getCompanyLogoUrl() != null) merchantProfile.setCompanyLogoUrl(profileRequest.getCompanyLogoUrl());
+        if(profileRequest.getCompanyWebsite() != null) merchantProfile.setCompanyWebsite(profileRequest.getCompanyWebsite());
+        if(profileRequest.getCountryCode() != null) merchantProfile.setCountryCode(profileRequest.getCountryCode());
+        if(profileRequest.getContactEmail() != null) merchantProfile.setContactEmail(profileRequest.getContactEmail());
+        if(profileRequest.getPhoneNumber() != null) merchantProfile.setPhoneNumber(profileRequest.getPhoneNumber());
+        if(profileRequest.getCompanySocialMedia() != null) merchantProfile.setCompanySocialMedia(profileRequest.getCompanySocialMedia());
+
+        return merchantProfile;
+    }
+
 }

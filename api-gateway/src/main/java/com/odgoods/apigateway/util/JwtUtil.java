@@ -1,10 +1,6 @@
 package com.odgoods.apigateway.util;
 
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,31 +22,29 @@ public class JwtUtil {
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                .verifyWith((SecretKey) getSignInKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        try {
+            return Jwts.parser()
+                    .verifyWith((SecretKey) getSignInKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (JwtException e) {
+            // Only wrap and rethrow as a general token error
+            throw new JwtException("Invalid or expired JWT token");
+        }
     }
 
     public boolean isTokenExpired(String token) {
         try {
             return extractAllClaims(token).getExpiration().before(new Date());
-        } catch (ExpiredJwtException e) {
-            return true;
+        } catch (JwtException e) {
+            return true; // treat as expired if parsing fails
         }
     }
 
     public void validateToken(String token) {
-        try {
-            Claims claims = extractAllClaims(token);
-
-            if (claims.getExpiration().before(new Date())) {
-                throw new JwtException("Token has expired");
-            }
-
-        } catch (JwtException e) {
-            throw new JwtException("Invalid token: " + e.getMessage());
+        if (isTokenExpired(token)) {
+            throw new JwtException("JWT token is expired");
         }
     }
 

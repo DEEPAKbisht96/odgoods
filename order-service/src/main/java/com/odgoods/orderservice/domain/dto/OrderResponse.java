@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 public record OrderResponse(
         Long id,
+        Long merchantId,
         String name,
         String description,
         String filePath,

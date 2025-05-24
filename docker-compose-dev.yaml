@@ -1,0 +1,244 @@
+services:
+
+  # Zookeeper = 2181
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.9.1
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - internal
+
+  # Apache-kafka = 9092:9092 / 29092:29092
+  apache-kafka:
+    image: confluentinc/cp-kafka:7.9.1
+    container_name: apache-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://apache-kafka:29092
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: false
+      KAFKA_BROKER_ID: 1
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+      - ./scripts:/opt/kafka/scripts
+    entrypoint: [ "/bin/bash", "-c" ]
+    command: |
+        "
+        /etc/confluent/docker/run &
+        echo 'Waiting for Kafka to be ready...'
+        while ! nc -z localhost 9092; do sleep 1; done
+        echo 'Kafka is ready. Creating topics...'
+        /opt/kafka/scripts/init-topics.sh
+        wait
+        "
+    networks:
+      - internal
+
+
+  # Auth service database = 5000:5432
+  auth-postgres-db:
+    image: postgres:17-alpine
+    container_name: auth-postgres-db
+    ports:
+      - "5000:5432"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+
+  # product service database = 5001:27017
+  product-mongo-db:
+    image: mongo:latest
+    container_name: product-mongo-db
+    ports:
+      - "5001:27017"
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_DATABASE: product_db
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER_PRODUCT}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - product_mongo_data:/data/db
+
+    networks:
+      - internal
+
+
+  # order service database = 5002:3306
+  order-postgres-db:
+    image: postgres:17-alpine
+    container_name: order-postgres-db
+    ports:
+      - "5002:5432"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: order_db
+      POSTGRES_USER: order_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - order_postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - internal
+
+
+  # notification service database =
+  notification-mongo-db:
+    image: mongo:latest
+    container_name: notification-mongo-db
+    ports:
+      - "5003:27017"
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_DATABASE: notification_db
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER_NOTIFICATION}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - notification_mongo_data:/data/db
+
+    networks:
+      - internal
+
+
+  # Auth service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "8001:8001"
+      - "9000:9000"
+    env_file:
+      - .env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-postgres-db:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INT_MODE: always
+    depends_on:
+      - auth-postgres-db
+    networks:
+      - internal
+
+
+  # order service
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    ports:
+      - "8003:8003"
+      - "9002:9002"
+    env_file:
+      - .env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://order-postgres-db:5432/order_db
+      SPRING_DATASOURCE_USERNAME: order_user
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INT_MODE: always
+    depends_on:
+      - order-postgres-db
+    networks:
+      - internal
+
+
+  # product service
+  product-service:
+    build:
+      context: ./product-service
+      dockerfile: Dockerfile
+    container_name: product-service
+    ports:
+      - "8002:8002"
+      - "9001:9001"
+    env_file:
+      - .env
+    environment:
+      MONGO_AUTH_DB: admin
+      MONGO_DB: product_db
+      MONGO_HOST: product-mongo-db
+      MONGO_PORT: 27017
+      MONGO_USER: ${MONGO_USER_PRODUCT}
+      MONGO_PASS: ${MONGO_PASSWORD}
+    depends_on:
+      - product-mongo-db
+    networks:
+      - internal
+
+
+  # notification service
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "8004:8004"
+    env_file:
+      - .env
+    environment:
+      MONGO_DB: notification_db
+      MONGO_HOST: notification-mongo-db
+      MONGO_PORT: 27017
+      MONGO_USER: ${MONGO_USER_NOTIFICATION}
+      MONGO_PASS: ${MONGO_PASSWORD}
+    depends_on:
+      - notification-mongo-db
+    networks:
+      - internal
+
+
+  # api-gateway service
+  api-gateway-service:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8000:8000"
+    networks:
+      - internal
+
+
+
+# Volumes  ---------->
+volumes:
+  kafka-data:
+  auth_postgres_data:
+  product_mongo_data:
+  order_postgres_data:
+  notification_mongo_data:
+
+
+
+# Networks ---------->
+networks:
+  internal:
+    driver: bridge

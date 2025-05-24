@@ -12,6 +12,7 @@ public class OrderMapper {
     public Order toEntity(OrderRequest orderRequest){
         Order order = new Order();
         order.setName(orderRequest.name());
+        order.setMerchantId(orderRequest.merchantId());
         order.setDescription(orderRequest.description());
         order.setDeadline(orderRequest.deadline());
         order.setFilePath(orderRequest.filePath());
@@ -24,6 +25,7 @@ public class OrderMapper {
     public OrderResponse toResponse(Order order){
         return new OrderResponse(
                 order.getId(),
+                order.getMerchantId(),
                 order.getName(),
                 order.getDescription(),
                 order.getFilePath(),

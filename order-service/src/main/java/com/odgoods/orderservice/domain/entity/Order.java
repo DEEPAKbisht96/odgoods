@@ -25,6 +25,10 @@ public class Order {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @NotNull(message = "Merchant ID is required")
+    @Column(name = "merchant_id", nullable = false)
+    private Long merchantId;
+
     @NotBlank(message = "Order name is required")
     @Size(max = 100, message = "Order name must not exceed 100 characters")
     private String name;

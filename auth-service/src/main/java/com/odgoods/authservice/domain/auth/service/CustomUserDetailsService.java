@@ -1,5 +1,6 @@
 package com.odgoods.authservice.domain.auth.service;
 
+import com.odgoods.authservice.common.exception.StatusBasedException.ConflictException;
 import com.odgoods.authservice.domain.auth.entity.User;
 import com.odgoods.authservice.domain.auth.repository.UserRepository;
 import com.odgoods.authservice.domain.auth.security.CustomUserDetails;
@@ -20,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new ConflictException("User not found with email: " + email));
 
         return new CustomUserDetails(user);
     }

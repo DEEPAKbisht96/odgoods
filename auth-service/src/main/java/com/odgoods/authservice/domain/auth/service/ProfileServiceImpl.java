@@ -1,5 +1,6 @@
 package com.odgoods.authservice.domain.auth.service;
 
+import com.odgoods.authservice.common.exception.StatusBasedException.ConflictException;
 import com.odgoods.authservice.domain.auth.dto.ProfileRequest;
 import com.odgoods.authservice.domain.auth.dto.ProfileResponse;
 import com.odgoods.authservice.domain.auth.entity.MerchantProfile;
@@ -27,7 +28,7 @@ public class ProfileServiceImpl implements ProfileService{
 
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+                .orElseThrow(() -> new ConflictException("User not found"));
 
         MerchantProfile merchantProfile = profileMapper.toEntity(profileRequest);
         merchantProfile.setUser(user);
@@ -41,9 +42,21 @@ public class ProfileServiceImpl implements ProfileService{
     public ProfileResponse getProfile(Long userId) {
 
         MerchantProfile merchantProfile = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+                .orElseThrow(() -> new ConflictException("User not found"));
 
         return profileMapper.toResponse(merchantProfile);
+    }
+
+    @Override
+    public ProfileResponse updateProfile(ProfileRequest profileRequest, Long userId) {
+        MerchantProfile merchantProfile = profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ConflictException("User not found"));
+
+        MerchantProfile updatedMerchantProfile = profileMapper.updateEntity(merchantProfile, profileRequest);
+
+        MerchantProfile savedMerchantProfile = profileRepository.save(updatedMerchantProfile);
+
+        return profileMapper.toResponse(savedMerchantProfile);
     }
 
 
